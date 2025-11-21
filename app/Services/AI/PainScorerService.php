@@ -67,13 +67,23 @@ class PainScorerService
         //    ['role'=>'user','content'=>"Score for urgency, frequency and willingness to pay (1-10):\n\n".$text]
         // ];
 
-        $result = ChatGpt::generateContent($input, $schema);
+        try {
+            $result = ChatGpt::generateContent($input, $schema);
 
-        if (is_string($result)) {
-            $decoded = json_decode($result, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                return $decoded;
+            if (is_string($result)) {
+                $decoded = json_decode($result, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    return $decoded;
+                }
             }
+            // If result is already an array
+            if (is_array($result)) {
+                return $result;
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("PainScorerService error: " . $e->getMessage());
         }
+
+        return [];
     }
 }

@@ -8,6 +8,8 @@ use App\Models\Problem;
 use App\Services\AI\GoToMarketMatcherService;
 use App\Services\AI\PainNormalizerService;
 use App\Services\AI\PainScorerService;
+use App\Services\AI\RevenueProjectionService;
+use App\Services\AI\CreativeAssetGeneratorService;
 use App\Services\Signals\SignalEnrichmentService;
 use Illuminate\Console\Command;
 
@@ -36,9 +38,13 @@ class ProcessPain extends Command
         PainNormalizerService $normalizer,
         PainScorerService $scorer,
         SignalEnrichmentService $signals,
-        GoToMarketMatcherService $matcher
+        GoToMarketMatcherService $matcher,
+        RevenueProjectionService $revenue,
+        CreativeAssetGeneratorService $creative
     ) {
         $problems = Problem::where('status', 'raw')->get();
+
+
 
         $this->info("Found " . $problems->count() . " raw problems to process.");
 
@@ -47,20 +53,23 @@ class ProcessPain extends Command
                 $this->info("Processing Problem ID {$problem->id}...");
 
                 $norm = $normalizer->normalize($problem->body);
-                $score = $scorer->score($problem->body);
-                
+                $score = $scorer->score($problem->body) ?? [];
+
                 // Use title if keywords are missing or empty
                 $keywords = $norm['keywords'] ?? [];
                 $searchText = !empty($keywords) ? implode(' ', $keywords) : $problem->title;
-                
+
                 $signalData = $signals->enrich($searchText);
                 $matches = $matcher->match(array_merge($norm, $score, $signalData));
+
+                $revenueData = $revenue->predict($problem->body, $score);
+                $creativeData = $creative->generate($problem->body, $norm['summary'] ?? '');
 
                 $problem->update([
                     'tags' => $norm['keywords'] ?? [],
                     'scores' => $score,
                     'signals' => $signalData,
-                    'total_score' => collect($score)->avg(),
+                    'total_score' => collect($score)->avg() ?? 0,
                     'status' => 'matched'
                 ]);
 
@@ -69,7 +78,14 @@ class ProcessPain extends Command
                     'structured' => $norm['summary'] ?? '',
                     'solution' => json_encode($matches['plays'] ?? []),
                     'complexity' => 'medium',
-                    'review_status' => 'pending'
+                    'review_status' => 'pending',
+                    'revenue_potential' => $revenueData,
+                    'market_validation' => [
+                        'community_index' => $signalData['community_index'] ?? 0,
+                        'keyword_trends' => $signalData['keyword_trends'] ?? [],
+                        'validation_links' => $signalData['validation_links'] ?? []
+                    ],
+                    'creative_assets' => $creativeData
                 ]);
 
                 AuditLog::create([
@@ -87,7 +103,7 @@ class ProcessPain extends Command
                 $this->error("Failed to process Problem ID {$problem->id}: " . $e->getMessage());
             }
         }
-        
+
         $this->info("Processing complete.");
     }
 }

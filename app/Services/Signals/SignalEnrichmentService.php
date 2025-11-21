@@ -15,6 +15,9 @@ class SignalEnrichmentService
             'search_volume' => $this->googleTrendsApprox($primary),
             'reddit_mentions' => $this->redditMentions($primary),
             'github_issues' => $this->githubIssueCount($primary),
+            'community_index' => rand(40, 95), // Simulated score 0-100
+            'keyword_trends' => $this->simulateKeywordTrends($primary),
+            'validation_links' => $this->simulateValidationLinks($primary),
         ];
     }
 
@@ -71,5 +74,37 @@ class SignalEnrichmentService
         $value = trim((string) $keywords);
 
         return strlen($value) ? Str::limit($value, 200) : null;
+    }
+
+    private function simulateKeywordTrends($kw): array
+    {
+        // Simulating the "Keyword Traffic & Trends" chart data
+        return [
+            'total_monthly_searches' => rand(500, 5000),
+            'trend_direction' => 'up', // or 'down', 'stable'
+            'top_keywords' => [
+                ['keyword' => $kw . ' tools', 'volume' => rand(100, 500), 'cpc' => rand(1, 10)],
+                ['keyword' => 'best ' . $kw, 'volume' => rand(50, 300), 'cpc' => rand(1, 5)],
+                ['keyword' => 'how to ' . $kw, 'volume' => rand(200, 800), 'cpc' => rand(0, 2)],
+            ]
+        ];
+    }
+
+    private function simulateValidationLinks($kw): array
+    {
+        // Simulating "Example Companies" / Research Sources bubbles
+        $sources = ['reddit.com', 'twitter.com', 'indiehackers.com', 'news.ycombinator.com'];
+        $links = [];
+
+        for ($i = 0; $i < 5; $i++) {
+            $source = $sources[array_rand($sources)];
+            $links[] = [
+                'source' => $source,
+                'url' => "https://{$source}/search?q=" . urlencode($kw),
+                'title' => "Discussion about {$kw} on {$source}"
+            ];
+        }
+
+        return $links;
     }
 }

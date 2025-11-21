@@ -42,7 +42,7 @@ class FetchProblem extends Command
 
         try {
             $items = $fetchProblem->problems();
-            // dd($items);gg
+            // dd($items);
         } catch (\Throwable $e) {
             $this->error('❌ Fetch failed: ' . $e->getMessage());
             Log::error('Problem ingest failed', ['error' => $e->getMessage()]);
@@ -62,7 +62,7 @@ class FetchProblem extends Command
                 $created = Problem::firstOrCreate(
                     [
                         'source_id' => $source->id,
-                        'external_id' => $i['external_id'],
+                        'external_id' => $i['external_id'] ?? \Illuminate\Support\Str::uuid()->toString(),
                     ],
                     [
                         'title' => $i['title'] ?? '(No Title)',
@@ -78,11 +78,9 @@ class FetchProblem extends Command
                     $countNew++;
                 }
             } catch (\Throwable $e) {
-                Log::error('❌ Error saving Reddit problem: '.$e->getMessage(), ['item' => $i]);
+                Log::error('❌ Error saving Reddit problem: ' . $e->getMessage(), ['item' => $i]);
             }
         }
-
-        $this->info("🎯 $countNew new Reddit problems saved successfully!");
         $this->info('📦 Fetch complete.');
     }
 }
