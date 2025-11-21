@@ -52,54 +52,6 @@ return [
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | 💬 Reddit API Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Used by RedditFetcher to get posts and pain statements.
-    |
-    */
-
-    'reddit' => [
-        'id' => env('REDDIT_CLIENT_ID'),
-        'secret' => env('REDDIT_CLIENT_SECRET'),
-        'subs' => explode(',', env('REDDIT_SUBREDDITS', 'Entrepreneur,Startups')),
-        'user_agent' => env('REDDIT_USER_AGENT', 'PainkillerIdeasBot/1.0'),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | 💡 StackOverflow API Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Used by StackOverflowFetcher for developer-related pain points.
-    |
-    */
-
-    'stackoverflow' => [
-        'key' => env('STACKEXCHANGE_KEY'),
-        'site' => env('STACKEXCHANGE_SITE', 'stackoverflow'),
-        'tags' => explode(',', env('STACKEXCHANGE_TAGS', 'feature-request,bug,api')),
-        'pagesize' => env('STACKEXCHANGE_PAGESIZE', 30),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | 🐦 X (Twitter) API Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Used by XFetcher for real-time “complaints” and trending problem tweets.
-    |
-    */
-
-    'x' => [
-        'api_key' => env('TWITTER_API_KEY'),
-        'api_secret' => env('TWITTER_API_SECRET'),
-        'bearer_token' => env('TWITTER_BEARER_TOKEN'),
-        'client_id' => env('TWITTER_CLIENT_ID'),
-        'client_secret' => env('TWITTER_CLIENT_SECRET'),
-    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -154,6 +106,7 @@ return [
         'process_schedule' => env('PROCESS_CRON', '30 6 * * *'),
         'notify_schedule' => env('NOTIFY_CRON', '0 9 * * 5'),
         'max_daily_fetch' => env('FETCH_LIMIT', 100),
+        'process_batch' => env('PROCESS_BATCH', 25),
         'enable_debug_logs' => env('PAINKILLER_DEBUG', false),
     ],
 

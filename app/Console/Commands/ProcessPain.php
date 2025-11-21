@@ -38,81 +38,56 @@ class ProcessPain extends Command
         SignalEnrichmentService $signals,
         GoToMarketMatcherService $matcher
     ) {
-        $problem = Problem::find(6);
-        if (!$problem) return;
+        $problems = Problem::where('status', 'raw')->get();
 
-        $norm = $normalizer->normalize($problem->body);
-        $score = $scorer->score($problem->body);
-        $signalData = $signals->enrich($norm['keywords'] ?? $problem->title);
-        $matches = $matcher->match(array_merge($norm, $score, $signalData));
+        $this->info("Found " . $problems->count() . " raw problems to process.");
 
+        foreach ($problems as $problem) {
+            try {
+                $this->info("Processing Problem ID {$problem->id}...");
 
-        // $norm = [
-        //     'summary' => 'Community post inviting founders to share their startups via a structured template and lifecycle stages to facilitate feedback, networking, and resource sharing while prohibiting public fundraising.',
-        //     'industry' => 'Startups and entrepreneurship',
-        //     'keywords' => [
-        //         'r/startups',
-        //         'Reddit',
-        //         'startup template',
-        //         'elevator pitch',
-        //         'MVP',
-        //         'product validation',
-        //         'product market fit',
-        //         'startup lifecycle',
-        //         'Discovery',
-        //         'Validation',
-        //         'Efficiency',
-        //         'Scaling',
-        //         'Profit Maximization',
-        //         'Renewal',
-        //         'networking',
-        //         'goals',
-        //         'discount',
-        //         'Q4 2023',
-        //     ],
-        //     'sentiment' => 'neutral',
-        // ];
+                $norm = $normalizer->normalize($problem->body);
+                $score = $scorer->score($problem->body);
+                
+                // Use title if keywords are missing or empty
+                $keywords = $norm['keywords'] ?? [];
+                $searchText = !empty($keywords) ? implode(' ', $keywords) : $problem->title;
+                
+                $signalData = $signals->enrich($searchText);
+                $matches = $matcher->match(array_merge($norm, $score, $signalData));
 
+                $problem->update([
+                    'tags' => $norm['keywords'] ?? [],
+                    'scores' => $score,
+                    'signals' => $signalData,
+                    'total_score' => collect($score)->avg(),
+                    'status' => 'matched'
+                ]);
 
-        // $score = [
-        //     'urgency' => 3,
-        //     'frequency' => 3,
-        //     'willingness_to_pay' => 2,
-        // ];
-        // $signalData = [
-        //     'search_volume' => 537,
-        //     'reddit_mentions' => 20,
-        //     'github_issues' => 0,
-        // ];
+                Idea::create([
+                    'problem_id' => $problem->id,
+                    'structured' => $norm['summary'] ?? '',
+                    'solution' => json_encode($matches['plays'] ?? []),
+                    'complexity' => 'medium',
+                    'review_status' => 'pending'
+                ]);
 
-    
+                AuditLog::create([
+                    'action' => 'AI_PROCESS',
+                    'details' => [
+                        'score' => $problem->total_score,
+                        'keywords' => $problem->tags
+                    ],
+                    'auditable_type' => Problem::class,
+                    'auditable_id' => $problem->id
+                ]);
 
-        $problem->update([
-            'tags' => $norm['keywords'] ?? [],
-            'scores' => $score,
-            'signals' => $signalData,
-            'total_score' => collect($score)->avg(),
-            'status' => 'matched'
-        ]);
-
-        Idea::create([
-            'problem_id' => $problem->id,
-            'structured' => $norm['summary'] ?? '',
-            'solution' => json_encode($matches['plays'] ?? []),
-            'complexity' => 'medium',
-            'review_status' => 'pending'
-        ]);
-
-        AuditLog::create([
-            'action' => 'AI_PROCESS',
-            'details' => [
-                'score' => $problem->total_score,
-                'keywords' => $problem->tags
-            ],
-            'auditable_type' => Problem::class,
-            'auditable_id' => $problem->id
-        ]);
-
-        info("Processed Problem ID {$problem->id}: Score {$problem->total_score}");
+                $this->info("Processed Problem ID {$problem->id}: Score {$problem->total_score}");
+            } catch (\Exception $e) {
+                $this->error("Failed to process Problem ID {$problem->id}: " . $e->getMessage());
+            }
+        }
+        
+        $this->info("Processing complete.");
     }
 }
