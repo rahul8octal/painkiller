@@ -13,29 +13,53 @@ class PainScorerService
         $schema = [
             "type" => "object",
             "properties" => [
-                "urgency" => [
+                "opportunity" => [
                     "type" => "integer",
-                    "minimum" => 1,
-                    "maximum" => 10,
-                    "description" => "How urgently users need this problem solved (1 = not urgent, 10 = critical)."
+                    "minimum" => 0,
+                    "maximum" => 100,
+                    "description" => "Market opportunity size and potential (0-100)."
                 ],
-                "frequency" => [
+                "pain" => [
                     "type" => "integer",
-                    "minimum" => 1,
-                    "maximum" => 10,
-                    "description" => "How often users experience this problem (1 = rarely, 10 = very frequently)."
+                    "minimum" => 0,
+                    "maximum" => 100,
+                    "description" => "Severity of pain being solved (0-100)."
                 ],
-                "willingness_to_pay" => [
+                "feasibility" => [
                     "type" => "integer",
-                    "minimum" => 1,
-                    "maximum" => 10,
-                    "description" => "How willing users would be to pay for a solution (1 = not willing, 10 = very willing)."
+                    "minimum" => 0,
+                    "maximum" => 100,
+                    "description" => "Technical and resource feasibility (0-100)."
+                ],
+                "why_now" => [
+                    "type" => "integer",
+                    "minimum" => 0,
+                    "maximum" => 100,
+                    "description" => "Market timing and urgency (0-100)."
+                ],
+                "revenue_potential" => [
+                    "type" => "integer",
+                    "minimum" => 0,
+                    "maximum" => 100,
+                    "description" => "Monetization opportunity (0-100)."
+                ],
+                "execution_difficulty" => [
+                    "type" => "integer",
+                    "minimum" => 0,
+                    "maximum" => 100,
+                    "description" => "Complexity of execution (0 = Very Hard, 100 = Very Easy/Low Difficulty). Note: Higher score means BETTER for business."
+                ],
+                "go_to_market" => [
+                    "type" => "integer",
+                    "minimum" => 0,
+                    "maximum" => 100,
+                    "description" => "Market accessibility and reach (0-100)."
                 ]
             ],
-            "required" => ["urgency", "frequency", "willingness_to_pay"]
+            "required" => ["opportunity", "pain", "feasibility", "why_now", "revenue_potential", "execution_difficulty", "go_to_market"]
         ];
 
-        $input  = "Score for urgency, frequency and willingness to pay (1-10):\n\n" . $text;
+        $input  = "Score the following problem statement based on Business Fit (0-100 scale):\n\n" . $text;
 
 
         // $input = [
