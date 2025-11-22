@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\AuditLog;
 use App\Models\Idea;
 use App\Models\Problem;
+use App\Services\AI\CommunitySignalsService;
 use App\Services\AI\GoToMarketMatcherService;
 use App\Services\AI\PainNormalizerService;
 use App\Services\AI\PainScorerService;
@@ -40,11 +41,10 @@ class ProcessPain extends Command
         GoToMarketMatcherService $matcher,
         RevenueProjectionService $revenue,
         CreativeAssetGeneratorService $creative,
-        KeywordTrafficService $traffic
+        KeywordTrafficService $traffic,
+        CommunitySignalsService $community
     ) {
         $problems = Problem::where('status', 'raw')->get();
-
-
 
         $this->info("Found " . $problems->count() . " raw problems to process.");
 
@@ -65,6 +65,7 @@ class ProcessPain extends Command
                 $revenueData = $revenue->predict($problem->body, $score);
                 $creativeData = $creative->generate($problem->body, $norm['summary'] ?? '');
                 $trafficData = $traffic->analyze($problem->body, $norm['keywords'] ?? []);
+                $communityData = $community->analyze($problem->body, $norm['keywords'] ?? []);
 
                 $problem->update([
                     'tags' => $norm['keywords'] ?? [],
@@ -85,7 +86,8 @@ class ProcessPain extends Command
                         'community_index' => $signalData['community_index'] ?? 0,
                         'keyword_trends' => $signalData['keyword_trends'] ?? [],
                         'validation_links' => $signalData['validation_links'] ?? [],
-                        'keyword_traffic' => $trafficData
+                        'keyword_traffic' => $trafficData,
+                        'community_signals' => $communityData
                     ],
                     'creative_assets' => $creativeData
                 ]);

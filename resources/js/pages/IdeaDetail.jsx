@@ -6,6 +6,7 @@ import RevenueCard from '../components/RevenueCard';
 import MarketValidationCard from '../components/MarketValidationCard';
 import CreativeAssets from '../components/CreativeAssets';
 import KeywordTrafficCard from '../components/KeywordTrafficCard';
+import CommunitySignalsCard from '../components/CommunitySignalsCard';
 
 export default function IdeaDetail() {
     const { id } = useParams();
@@ -104,6 +105,9 @@ export default function IdeaDetail() {
 
             {/* Keyword Traffic */}
             <KeywordTrafficCard traffic={idea.market_validation?.keyword_traffic} />
+
+            {/* Community Signals */}
+            <CommunitySignalsCard signals={idea.market_validation?.community_signals} />
 
             {/* Creative Assets */}
             <div>
