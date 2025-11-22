@@ -14,6 +14,12 @@ class AdminDashboardController extends Controller
         return response()->json($ideas);
     }
 
+    public function show($id)
+    {
+        $idea = Idea::with('problem')->findOrFail($id);
+        return response()->json($idea);
+    }
+
     public function approve($id)
     {
         $idea = Idea::findOrFail($id);
@@ -47,3 +53,6 @@ class AdminDashboardController extends Controller
         return response()->json(['message' => 'Idea updated', 'idea' => $idea]);
     }
 }
+
+
+// [{"title":"Co-hosted Weekly Thread + Mod Toolkit","type":"Community","short_reason":"Partner with subreddit mods to co-brand the weekly open thread and supply moderation templates, prompts, and anti-spam macros\u2014adding real value while aligning with community guidelines and reducing non-Q&A noise."},{"title":"Operator AMA Roadshow","type":"PR","short_reason":"Run a rotating AMA series with vetted small business operators and educators; it fits the community\u2019s appetite for experiences and lessons learned, drives high-quality engagement, and respects no-spam policies."},{"title":"Weekly Thread Digest + SEO Hub","type":"Product","short_reason":"Offer a free tool that summarizes each week\u2019s thread into a digest and hosts an SEO-optimized archive; captures rising search demand, delivers educational materials, and earns permissioned opt-ins without overt promotion."}]

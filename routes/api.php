@@ -14,8 +14,8 @@ Route::post('/submit-idea', [UserSubmissionController::class, 'store']);
 
 Route::prefix('admin')->group(function () {
     Route::get('/ideas', [AdminDashboardController::class, 'index']);
+    Route::get('/ideas/{id}', [AdminDashboardController::class, 'show']);
     Route::post('/ideas/{id}/approve', [AdminDashboardController::class, 'approve']);
     Route::post('/ideas/{id}/reject', [AdminDashboardController::class, 'reject']);
     Route::put('/ideas/{id}', [AdminDashboardController::class, 'update']);
 });
-
