@@ -3,14 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Idea;
+use App\Models\Problem;
+use App\Models\Source;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class AdminDashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $ideas = Idea::with('problem')->orderBy('created_at', 'desc')->paginate(20);
+        $query = Idea::with('problem')->orderBy('created_at', 'desc');
+
+        // if ($request->has('status') && $request->status !== 'all') {
+        //     $query->where('review_status', $request->status);
+        // }
+
+        $ideas = $query->paginate(20);
         return response()->json($ideas);
     }
 
@@ -18,6 +26,42 @@ class AdminDashboardController extends Controller
     {
         $idea = Idea::with('problem')->findOrFail($id);
         return response()->json($idea);
+    }
+
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'status' => 'required|in:pending,approved,rejected',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Create a dummy problem for the manual idea
+        $source = Source::firstOrCreate(['name' => 'admin_manual']);
+
+        $problem = Problem::create([
+            'source_id' => $source->id,
+            'external_id' => 'admin_' . uniqid(),
+            'title' => $request->title,
+            'body' => $request->description,
+            'status' => 'processed',
+            'author' => 'Admin',
+            'votes' => 0,
+        ]);
+
+        $idea = Idea::create([
+            'problem_id' => $problem->id,
+            'review_status' => $request->status,
+            'revenue_potential' => $request->revenue_potential ?? [],
+            'market_validation' => $request->market_validation ?? [],
+            'creative_assets' => $request->creative_assets ?? [],
+        ]);
+
+        return response()->json(['message' => 'Idea created successfully', 'idea' => $idea]);
     }
 
     public function approve($id)
@@ -36,23 +80,25 @@ class AdminDashboardController extends Controller
 
     public function update(Request $request, $id)
     {
-        $idea = Idea::findOrFail($id);
+        $idea = Idea::with('problem')->findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
-            'structured' => 'sometimes|string',
-            'solution' => 'sometimes|string', // JSON string
-            'complexity' => 'sometimes|string',
-        ]);
+        $idea->update($request->only(['review_status', 'revenue_potential', 'market_validation', 'creative_assets']));
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+        if ($request->has('title') || $request->has('description')) {
+            $idea->problem->update([
+                'title' => $request->title ?? $idea->problem->title,
+                'body' => $request->description ?? $idea->problem->body,
+            ]);
         }
-
-        $idea->update($request->only(['structured', 'solution', 'complexity']));
 
         return response()->json(['message' => 'Idea updated', 'idea' => $idea]);
     }
+
+    public function destroy($id)
+    {
+        $idea = Idea::findOrFail($id);
+        $idea->problem()->delete(); // Cascade delete problem if needed, or just the idea
+        $idea->delete();
+        return response()->json(['message' => 'Idea deleted successfully']);
+    }
 }
-
-
-// [{"title":"Co-hosted Weekly Thread + Mod Toolkit","type":"Community","short_reason":"Partner with subreddit mods to co-brand the weekly open thread and supply moderation templates, prompts, and anti-spam macros\u2014adding real value while aligning with community guidelines and reducing non-Q&A noise."},{"title":"Operator AMA Roadshow","type":"PR","short_reason":"Run a rotating AMA series with vetted small business operators and educators; it fits the community\u2019s appetite for experiences and lessons learned, drives high-quality engagement, and respects no-spam policies."},{"title":"Weekly Thread Digest + SEO Hub","type":"Product","short_reason":"Offer a free tool that summarizes each week\u2019s thread into a digest and hosts an SEO-optimized archive; captures rising search demand, delivers educational materials, and earns permissioned opt-ins without overt promotion."}]
