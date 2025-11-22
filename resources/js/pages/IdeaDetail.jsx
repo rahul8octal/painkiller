@@ -5,6 +5,7 @@ import { ArrowLeft, Target, Zap, Clock, BarChart, AlertTriangle } from 'lucide-r
 import RevenueCard from '../components/RevenueCard';
 import MarketValidationCard from '../components/MarketValidationCard';
 import CreativeAssets from '../components/CreativeAssets';
+import KeywordTrafficCard from '../components/KeywordTrafficCard';
 
 export default function IdeaDetail() {
     const { id } = useParams();
@@ -100,6 +101,9 @@ export default function IdeaDetail() {
                 <RevenueCard revenue={idea.revenue_potential} />
                 <MarketValidationCard validation={idea.market_validation} />
             </div>
+
+            {/* Keyword Traffic */}
+            <KeywordTrafficCard traffic={idea.market_validation?.keyword_traffic} />
 
             {/* Creative Assets */}
             <div>

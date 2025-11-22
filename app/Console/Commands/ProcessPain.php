@@ -10,10 +10,9 @@ use App\Services\AI\PainNormalizerService;
 use App\Services\AI\PainScorerService;
 use App\Services\AI\RevenueProjectionService;
 use App\Services\AI\CreativeAssetGeneratorService;
+use App\Services\AI\KeywordTrafficService;
 use App\Services\Signals\SignalEnrichmentService;
 use Illuminate\Console\Command;
-
-use function Laravel\Prompts\info;
 
 class ProcessPain extends Command
 {
@@ -40,7 +39,8 @@ class ProcessPain extends Command
         SignalEnrichmentService $signals,
         GoToMarketMatcherService $matcher,
         RevenueProjectionService $revenue,
-        CreativeAssetGeneratorService $creative
+        CreativeAssetGeneratorService $creative,
+        KeywordTrafficService $traffic
     ) {
         $problems = Problem::where('status', 'raw')->get();
 
@@ -64,6 +64,7 @@ class ProcessPain extends Command
 
                 $revenueData = $revenue->predict($problem->body, $score);
                 $creativeData = $creative->generate($problem->body, $norm['summary'] ?? '');
+                $trafficData = $traffic->analyze($problem->body, $norm['keywords'] ?? []);
 
                 $problem->update([
                     'tags' => $norm['keywords'] ?? [],
@@ -83,7 +84,8 @@ class ProcessPain extends Command
                     'market_validation' => [
                         'community_index' => $signalData['community_index'] ?? 0,
                         'keyword_trends' => $signalData['keyword_trends'] ?? [],
-                        'validation_links' => $signalData['validation_links'] ?? []
+                        'validation_links' => $signalData['validation_links'] ?? [],
+                        'keyword_traffic' => $trafficData
                     ],
                     'creative_assets' => $creativeData
                 ]);
