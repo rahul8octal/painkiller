@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Problem;
 use App\Models\Source;
 use App\Services\AI\FetchProblemService;
+use App\Services\DataCollection\TwitterFetcher;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -27,7 +28,7 @@ class FetchProblem extends Command
     /**
      * Execute the console command.
      */
-    public function handle(FetchProblemService $fetchProblem)
+    public function handle(FetchProblemService $fetchProblem, TwitterFetcher $twitterFetcher)
     {
         $this->info('🚀 Starting weekly research ingest...');
 
@@ -42,7 +43,7 @@ class FetchProblem extends Command
 
         try {
             $items = $fetchProblem->problems();
-            // dd($items);
+            dd($items);
         } catch (\Throwable $e) {
             $this->error('❌ Fetch failed: ' . $e->getMessage());
             Log::error('Problem ingest failed', ['error' => $e->getMessage()]);
@@ -81,6 +82,49 @@ class FetchProblem extends Command
                 Log::error('❌ Error saving Reddit problem: ' . $e->getMessage(), ['item' => $i]);
             }
         }
-        $this->info('📦 Fetch complete.');
+        $this->info('📦 AI Fetch complete.');
+
+    //     // // --- Twitter Fetch ---
+    //     $this->info('🐦 Starting Twitter fetch...');
+
+    //     $twitterSource = Source::firstOrCreate(
+    //         ['name' => 'twitter'],
+    //         [
+    //             'type' => 'social',
+    //             'config' => ['description' => 'Twitter/X Nitter RSS'],
+    //             'active' => true,
+    //         ]
+    //     );
+
+    //     try {
+    //         $tweets = $twitterFetcher->fetch(10); // Fetch 10 tweets
+    //         dd($tweets);
+    //         $this->info('✅ Fetched ' . count($tweets) . ' tweets.');
+
+    //         foreach ($tweets as $tweet) {
+    //             try {
+    //                 Problem::firstOrCreate(
+    //                     [
+    //                         'source_id' => $twitterSource->id,
+    //                         'external_id' => $tweet['external_id'],
+    //                     ],
+    //                     [
+    //                         'title' => $tweet['title'],
+    //                         'body' => $tweet['body'],
+    //                         'url' => $tweet['url'],
+    //                         'author' => $tweet['author'],
+    //                         'votes' => $tweet['votes'],
+    //                         'status' => 'raw',
+    //                     ]
+    //                 );
+    //             } catch (\Throwable $e) {
+    //                 Log::error('❌ Error saving Twitter problem: ' . $e->getMessage());
+    //             }
+    //         }
+    //     } catch (\Throwable $e) {
+    //         $this->error('❌ Twitter fetch failed: ' . $e->getMessage());
+    //     }
+
+    //     $this->info('📦 All fetches complete.');
     }
 }

@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Lock, Loader2 } from 'lucide-react';
 
 export default function Login() {
+    const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
-
-    const from = location.state?.from?.pathname || '/admin';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -20,10 +21,34 @@ export default function Login() {
         setError('');
 
         try {
-            await login(email, password);
-            navigate(from, { replace: true });
+            if (isLogin) {
+                const user = await login(email, password);
+                if (user.is_admin) {
+                    navigate('/');
+                } else {
+                    navigate('/pricing');
+                }
+            } else {
+                if (password !== passwordConfirmation) {
+                    setError('Passwords do not match.');
+                    setLoading(false);
+                    return;
+                }
+                await axios.post('/api/register', {
+                    name,
+                    email,
+                    password,
+                    password_confirmation: passwordConfirmation
+                });
+                const user = await login(email, password);
+                if (user.is_admin) {
+                    navigate('/');
+                } else {
+                    navigate('/pricing');
+                }
+            }
         } catch (err) {
-            setError('Invalid credentials. Please try again.');
+            setError(err.response?.data?.message || 'Authentication failed. Please try again.');
             setLoading(false);
         }
     };
@@ -36,8 +61,17 @@ export default function Login() {
                         <Lock className="h-6 w-6 text-indigo-600" />
                     </div>
                     <h2 className="mt-6 text-3xl font-extrabold text-slate-900">
-                        Admin Login
+                        {isLogin ? 'Sign in to your account' : 'Create your account'}
                     </h2>
+                    <p className="mt-2 text-sm text-slate-600">
+                        {isLogin ? 'Or ' : 'Already have an account? '}
+                        <button 
+                            onClick={() => setIsLogin(!isLogin)} 
+                            className="font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none"
+                        >
+                            {isLogin ? 'start your 14-day free trial' : 'Sign in'}
+                        </button>
+                    </p>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     {error && (
@@ -46,6 +80,22 @@ export default function Login() {
                         </div>
                     )}
                     <div className="rounded-md shadow-sm -space-y-px">
+                        {!isLogin && (
+                            <div>
+                                <label htmlFor="name" className="sr-only">Full Name</label>
+                                <input
+                                    id="name"
+                                    name="name"
+                                    type="text"
+                                    autoComplete="name"
+                                    required={!isLogin}
+                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-500 text-slate-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                    placeholder="Full Name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
+                            </div>
+                        )}
                         <div>
                             <label htmlFor="email-address" className="sr-only">Email address</label>
                             <input
@@ -54,7 +104,7 @@ export default function Login() {
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-500 text-slate-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-500 text-slate-900 ${isLogin ? 'rounded-t-md' : ''} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
                                 placeholder="Email address"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -66,14 +116,30 @@ export default function Login() {
                                 id="password"
                                 name="password"
                                 type="password"
-                                autoComplete="current-password"
+                                autoComplete={isLogin ? "current-password" : "new-password"}
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-500 text-slate-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-500 text-slate-900 ${isLogin ? 'rounded-b-md' : ''} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
                                 placeholder="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
+                        {!isLogin && (
+                            <div>
+                                <label htmlFor="password-confirmation" className="sr-only">Confirm Password</label>
+                                <input
+                                    id="password-confirmation"
+                                    name="password_confirmation"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    required={!isLogin}
+                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-500 text-slate-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                    placeholder="Confirm Password"
+                                    value={passwordConfirmation}
+                                    onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -85,7 +151,7 @@ export default function Login() {
                             {loading ? (
                                 <Loader2 className="animate-spin h-5 w-5 text-white" />
                             ) : (
-                                'Sign in'
+                                isLogin ? 'Sign in' : 'Sign up'
                             )}
                         </button>
                     </div>

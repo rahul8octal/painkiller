@@ -46,6 +46,7 @@ export const AuthProvider = ({ children }) => {
         setToken(newToken);
         setUser(newUser);
         axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        return newUser;
     };
 
     const logout = async () => {

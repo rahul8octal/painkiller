@@ -8,6 +8,8 @@ import IdeaDetail from './pages/IdeaDetail.jsx';
 import SubmitIdea from './pages/SubmitIdea.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import AdminEditIdea from './pages/AdminEditIdea.jsx';
+import Pricing from './pages/Pricing.jsx';
+import Signup from './pages/Signup.jsx';
 
 import { AuthProvider } from './context/AuthContext.jsx';
 import Login from './pages/Login.jsx';
@@ -19,9 +21,10 @@ function App() {
             <BrowserRouter>
                 <Routes>
                     <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
                     
-                    <Route path="/" element={<Layout />}>
-                        <Route index element={<IdeaList />} />
+                    <Route element={<Layout />}>
+                        <Route path="/" element={<IdeaList />} />
                         <Route path="ideas/:id" element={<IdeaDetail />} />
                         <Route path="submit" element={<SubmitIdea />} />
                         
@@ -41,6 +44,7 @@ function App() {
                                 <AdminEditIdea />
                             </ProtectedRoute>
                         } />
+                        <Route path="/pricing" element={<Pricing />} /> {/* Added Pricing route */}
 
                         <Route path="*" element={<div className="p-10 text-center">
                             <h1 className="text-2xl font-bold text-slate-900">404 - Page Not Found</h1>

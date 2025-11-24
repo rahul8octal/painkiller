@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Lightbulb, PlusCircle, Search, Menu, X, Settings, LogOut, LogIn } from 'lucide-react';
+import { Lightbulb, PlusCircle, Search, Menu, X, Settings, LogOut, LogIn, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
@@ -13,7 +13,11 @@ export default function Layout() {
         { path: '/submit', label: 'Analyze Idea', icon: PlusCircle },
     ];
 
-    if (user) {
+    if (user && !user.is_admin) {
+        navItems.push({ path: '/pricing', label: 'Pricing', icon: CreditCard });
+    }
+
+    if (user && user.is_admin) {
         navItems.push({ path: '/admin', label: 'Admin Panel', icon: Settings });
     }
 

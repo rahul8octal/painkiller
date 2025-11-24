@@ -21,6 +21,10 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Lemon Squeezy integration
+
+Need payments or subscriptions? Follow the [step-by-step Lemon Squeezy guide](docs/lemon-squeezy.md) to install the `lmsqueezy/laravel` package, configure secrets, build checkout flows, and wire up secure webhooks.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
